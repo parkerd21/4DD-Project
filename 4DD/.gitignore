@@ -29,3 +29,9 @@ build/
 
 ### VS Code ###
 .vscode/
+/dataBase.mv.db
+/mvnw
+/mvnw.cmd
+/dataBase.trace.db
+/src/main/resources/data.sql
+/src/main/resources/schema.sql
