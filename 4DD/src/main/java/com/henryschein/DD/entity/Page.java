@@ -1,22 +1,25 @@
 package com.henryschein.DD.entity;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Stack;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
+import javax.persistence.*;
+import java.util.List;
+
+@NoArgsConstructor
+@Getter
+@Setter
+
+@Entity
+@Table(name = "PAGE")
 public class Page {
-    private int id;
-    private HashMap<String, Stack<DataElement>> dataElements = new HashMap<>();
 
-    public Page() {
+    @Id
+    @Column(name = "PAGE_ID")
+    private Long pageId;
 
-    }
-
-    public int getId() {
-        return id;
-    }
-
-    public void setId(int id) {
-        this.id = id;
-    }
+    @OneToMany(cascade= {CascadeType.ALL})
+    @JoinColumn(name = "data_id")
+    private List<DataElement> dataElements;
 }

@@ -1,13 +1,11 @@
 package com.henryschein.DD.entity;
 
+import com.henryschein.DD.dto.DataElementDTO;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import javax.persistence.*;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
 
 
 @Getter
@@ -21,42 +19,38 @@ public class DataElement {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "DATA_ID")
-    private Long data_id;
-
-    @Column(name = "VALUE")
-    private String value;
-
-    @Column(name = "XCOORD")
+    private Long dataId;
     private Integer xcoord;
-
-    @Column(name = "YCOORD")
     private Integer ycoord;
+    private Integer zcoord;
+    private String value;
+    @Column(name = "PAGE_ID")
+    private Long pageId;
 
-    @OneToMany(mappedBy = "dataId", cascade= {CascadeType.ALL})
-    private List<History> listOfHistory;
-
-    public DataElement(String value, int xCoord, int yCoord) {
+    public DataElement(String value, Integer xcoord, Integer ycoord) {
         this.value = value;
-        this.xcoord = xCoord;
-        this.ycoord = yCoord;
+        this.xcoord = xcoord;
+        this.ycoord = ycoord;
     }
 
-    public DataElement(String value, String coords) {
-        this.value = value;
-        setCoords(coords);
+    public DataElement(DataElementDTO dataElementDTO) {
+        this.dataId = dataElementDTO.getDataId();
+        this.xcoord = dataElementDTO.getXcoord();
+        this.ycoord = dataElementDTO.getYcoord();
+        this.zcoord = dataElementDTO.getZcoord();
+        this.value = dataElementDTO.getValue();
+        this.pageId = dataElementDTO.getPageId();
     }
 
-    public void setCoords(int x, int y) {
-        xcoord = x;
-        ycoord = y;
-    }
-
-    public void setCoords(String coords) {
-        xcoord = Integer.parseInt(coords.substring(1,2));
-        ycoord = Integer.parseInt(coords.substring(3,4));
-    }
-
-    public String getCoords() {
-        return "[" + xcoord + "," + ycoord + "]";
+    @Override
+    public String toString() {
+        return "\n{" +
+                "\n\tDATA_ID: " + dataId +
+                "\n\tPAGE_ID " + pageId +
+                "\n\tXCOORD: " + xcoord +
+                "\n\tYCOORD: " + ycoord +
+                "\n\tZCOORD: " + zcoord +
+                "\n\tVALUE: " + value +
+                "\n}";
     }
 }

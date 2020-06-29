@@ -1,6 +1,7 @@
 package com.henryschein.DD.service;
 
-import com.henryschein.DD.dao.DataElementRepository;
+import com.henryschein.DD.dao.DataElementDAO;
+import com.henryschein.DD.dto.DataElementDTO;
 import com.henryschein.DD.entity.DataElement;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -11,31 +12,42 @@ import java.util.Optional;
 @Service
 public class DataElementService {
 
-    private DataElementRepository dataElementRepository;
+    private DataElementDAO dataElementDAO;
 
     @Autowired
-    public DataElementService(DataElementRepository theDataElementRepository) {
-        dataElementRepository = theDataElementRepository;
+    public DataElementService(DataElementDAO theDataElementDAO) {
+        dataElementDAO = theDataElementDAO;
     }
 
-    public Optional<DataElement> findByCoords(Integer x, Integer y) {
-        return dataElementRepository.findByCoords(x, y);
+    public Optional<DataElement> getByXYZ(Long pageId, Integer x, Integer y, Integer z) {
+        return dataElementDAO.getByXYZ(pageId, x, y, z);
     }
 
-    public Optional<DataElement> findById(Long id) {
-        return dataElementRepository.findById(id);
+    public Optional<DataElement> getByXY(Long pageId, Integer x, Integer y) {
+        return dataElementDAO.getByXY(pageId, x, y);
     }
 
     public List<DataElement> findAll() {
-        return dataElementRepository.findAll();
+        return dataElementDAO.findAll();
     }
 
-    public void save(DataElement dataElement) {
-        dataElementRepository.save(dataElement);
+    public DataElement createAndAdd(DataElementDTO dataElementDTO) {
+        Optional<DataElement> currentDataElement = getByXY(dataElementDTO.getPageId(), dataElementDTO.getXcoord(), dataElementDTO.getYcoord());
+        if (currentDataElement.isEmpty()) {
+            dataElementDTO.setZcoord(1);
+            DataElement dataElement = new DataElement(dataElementDTO);
+            return dataElementDAO.saveAndFlush(dataElement);
+        }
+        else
+            return null; // throw exception
     }
 
-    public void deleteById(Long id) {
-        dataElementRepository.deleteById(id);
+    public DataElement update(DataElementDTO dataElementDTO) {
+        DataElement dataElement = new DataElement(dataElementDTO);
+        return dataElementDAO.saveAndFlush(dataElement);
     }
 
+    public List<DataElement> getHistory(Long pageId, Integer x, Integer y) {
+        return dataElementDAO.getHistory(pageId, x, y);
+    }
 }
