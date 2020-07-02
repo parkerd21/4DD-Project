@@ -3,6 +3,7 @@ package com.henryschein.DD.service;
 import com.henryschein.DD.dao.DataElementDAO;
 import com.henryschein.DD.dto.DataElementDTO;
 import com.henryschein.DD.entity.DataElement;
+import com.henryschein.DD.entity.Page;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -31,30 +32,28 @@ public class DataElementService {
         return dataElementDAO.findAll();
     }
 
-    public String add(DataElementDTO dataElementDTO) {
-        DataElement currentElement =
+    public DataElement add(DataElementDTO dataElementDTO) {
+        DataElement initialElement =
                 getByXY(dataElementDTO.getPageId(), dataElementDTO.getXcoord(), dataElementDTO.getYcoord());
-        if (currentElement == null) {
+        if (initialElement == null) {
             dataElementDTO.setZcoord(1);
             DataElement newElement = new DataElement(dataElementDTO);
-            dataElementDAO.saveAndFlush(newElement);
-            return newElement.toString();
+            return dataElementDAO.saveAndFlush(newElement);
         }
         else
-            return "Cannot create a new dataElement at that location because one already exists there." +
-                    " Try updating or a new X,Y location";
+            return null;
     }
 
-    public String update(DataElementDTO dataElementDTO) {
-        DataElement currentElement =
+    public DataElement update(DataElementDTO dataElementDTO) {
+        DataElement initialElement =
                 getByXY(dataElementDTO.getPageId(), dataElementDTO.getXcoord(), dataElementDTO.getYcoord());
-        if (currentElement != null) {
+        if (initialElement != null) {
             DataElement newElement = new DataElement(dataElementDTO);
-            newElement.setZcoord(currentElement.getZcoord() + 1);
-            dataElementDAO.saveAndFlush(newElement);
-            return newElement.toString();
+            newElement.setZcoord(initialElement.getZcoord() + 1);
+            return dataElementDAO.saveAndFlush(newElement);
         }
-        return "No element exists at that location to update";
+        else
+            return null;
     }
 
     public List<DataElement> getHistory(Long pageId, Integer x, Integer y) {
@@ -62,7 +61,13 @@ public class DataElementService {
     }
 
     @Transactional
-    public void deleteByXY(Long pageId, Integer x, Integer y) {
+    public String deleteByXY(Long pageId, Integer x, Integer y) {
         dataElementDAO.deleteByXY(pageId, x, y);
+        return "Deleted dataElement and its history at pageId: " + pageId + ", xcoord: " + x + ", ycoord: " + y;
+    }
+
+    public boolean dataElementExists(Long pageId, Integer x, Integer y) {
+        DataElement dataElement = dataElementDAO.getByXY(pageId, x, y);
+        return dataElement != null;
     }
 }

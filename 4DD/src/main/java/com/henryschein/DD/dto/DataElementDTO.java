@@ -10,10 +10,17 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 public class DataElementDTO {
-    private Long dataId;
+    private Long pageId;
     private Integer xcoord;
     private Integer ycoord;
     private Integer zcoord;
     private String value;
-    private Long pageId;
+    private Long dataId;
+
+    public DataElementDTO(Long pageId, Integer x, Integer y, String value) {
+        this.pageId = pageId;
+        this.xcoord = x;
+        this.ycoord = y;
+        this.value = value;
+    }
 }

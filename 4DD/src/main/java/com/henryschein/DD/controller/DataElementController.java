@@ -39,14 +39,14 @@ public class DataElementController {
     }
 
     @PostMapping("/")
-    public String add(@RequestBody DataElementDTO dataElementDTO) {
+    public DataElement add(@RequestBody DataElementDTO dataElementDTO) {
         dataElementDTO.setDataId(null);
         dataElementDTO.setZcoord(null);
         return dataElementService.add(dataElementDTO);
     }
 
     @PutMapping("/")
-    public String update(@RequestBody DataElementDTO dataElementDTO) {
+    public DataElement update(@RequestBody DataElementDTO dataElementDTO) {
         dataElementDTO.setDataId(null);
         dataElementDTO.setZcoord(null);
         return dataElementService.update(dataElementDTO);
@@ -54,7 +54,6 @@ public class DataElementController {
 
     @DeleteMapping("/")
     public String deleteByXY(@RequestParam Long pageId, @RequestParam Integer x, @RequestParam Integer y) {
-        dataElementService.deleteByXY(pageId, x, y);
-        return "Deleted dataElement and its history at pageId: " + pageId + ", xcoord: " + x + ", ycoord: " + y;
+        return dataElementService.deleteByXY(pageId, x, y);
     }
 }

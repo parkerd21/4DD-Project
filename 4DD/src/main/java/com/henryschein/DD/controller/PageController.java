@@ -27,8 +27,13 @@ public class PageController {
 
     @PostMapping("/")
     public Page add(@RequestBody PageDTO pageDTO) {
+        pageDTO.setPageId(null);
         return pageService.add(pageDTO);
     }
+
+    @PutMapping("/")
+    public Page update(@RequestBody PageDTO pageDTO) { return pageService.update(pageDTO); }
+
 
 
 
