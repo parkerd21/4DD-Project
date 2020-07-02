@@ -6,8 +6,8 @@ import com.henryschein.DD.entity.DataElement;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import javax.transaction.Transactional;
 import java.util.List;
-import java.util.Optional;
 
 @Service
 public class DataElementService {
@@ -19,35 +19,50 @@ public class DataElementService {
         dataElementDAO = theDataElementDAO;
     }
 
-    public Optional<DataElement> getByXYZ(Long pageId, Integer x, Integer y, Integer z) {
+    public DataElement getByXYZ(Long pageId, Integer x, Integer y, Integer z) {
         return dataElementDAO.getByXYZ(pageId, x, y, z);
     }
 
-    public Optional<DataElement> getByXY(Long pageId, Integer x, Integer y) {
+    public DataElement getByXY(Long pageId, Integer x, Integer y) {
         return dataElementDAO.getByXY(pageId, x, y);
     }
 
-    public List<DataElement> findAll() {
+    public List<DataElement> getAll() {
         return dataElementDAO.findAll();
     }
 
-    public DataElement createAndAdd(DataElementDTO dataElementDTO) {
-        Optional<DataElement> currentDataElement = getByXY(dataElementDTO.getPageId(), dataElementDTO.getXcoord(), dataElementDTO.getYcoord());
-        if (currentDataElement.isEmpty()) {
+    public String add(DataElementDTO dataElementDTO) {
+        DataElement currentElement =
+                getByXY(dataElementDTO.getPageId(), dataElementDTO.getXcoord(), dataElementDTO.getYcoord());
+        if (currentElement == null) {
             dataElementDTO.setZcoord(1);
-            DataElement dataElement = new DataElement(dataElementDTO);
-            return dataElementDAO.saveAndFlush(dataElement);
+            DataElement newElement = new DataElement(dataElementDTO);
+            dataElementDAO.saveAndFlush(newElement);
+            return newElement.toString();
         }
         else
-            return null; // throw exception
+            return "Cannot create a new dataElement at that location because one already exists there." +
+                    " Try updating or a new X,Y location";
     }
 
-    public DataElement update(DataElementDTO dataElementDTO) {
-        DataElement dataElement = new DataElement(dataElementDTO);
-        return dataElementDAO.saveAndFlush(dataElement);
+    public String update(DataElementDTO dataElementDTO) {
+        DataElement currentElement =
+                getByXY(dataElementDTO.getPageId(), dataElementDTO.getXcoord(), dataElementDTO.getYcoord());
+        if (currentElement != null) {
+            DataElement newElement = new DataElement(dataElementDTO);
+            newElement.setZcoord(currentElement.getZcoord() + 1);
+            dataElementDAO.saveAndFlush(newElement);
+            return newElement.toString();
+        }
+        return "No element exists at that location to update";
     }
 
     public List<DataElement> getHistory(Long pageId, Integer x, Integer y) {
         return dataElementDAO.getHistory(pageId, x, y);
+    }
+
+    @Transactional
+    public void deleteByXY(Long pageId, Integer x, Integer y) {
+        dataElementDAO.deleteByXY(pageId, x, y);
     }
 }

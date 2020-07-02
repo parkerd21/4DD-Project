@@ -6,7 +6,6 @@ import com.henryschein.DD.service.DataElementService;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Optional;
 
 @RestController
 @RequestMapping("data_elements")
@@ -18,9 +17,10 @@ public class DataElementController {
         this.dataElementService = theDataElementService;
     }
 
-@GetMapping("/")
-    public Optional<DataElement> getByCoords(
-            @RequestParam Long pageId, @RequestParam Integer x, @RequestParam Integer y, @RequestParam(value = "z", required = false) Integer z)
+    @GetMapping("/")
+    public DataElement getByCoords(
+            @RequestParam Long pageId, @RequestParam Integer x, @RequestParam Integer y,
+            @RequestParam(value = "z", required = false) Integer z)
     {
         if (z == null)
             return dataElementService.getByXY(pageId, x, y);
@@ -35,28 +35,26 @@ public class DataElementController {
 
     @GetMapping("/all")
     public List<DataElement> getAll() {
-        return dataElementService.findAll();
+        return dataElementService.getAll();
     }
 
     @PostMapping("/")
-    public DataElement addDataElement(@RequestBody DataElementDTO dataElementDTO) {
-        dataElementDTO.setDataId(0L);
-        return dataElementService.createAndAdd(dataElementDTO);
+    public String add(@RequestBody DataElementDTO dataElementDTO) {
+        dataElementDTO.setDataId(null);
+        dataElementDTO.setZcoord(null);
+        return dataElementService.add(dataElementDTO);
     }
 
     @PutMapping("/")
-    public DataElement updateDataElement(@RequestBody DataElementDTO dataElementDTO) {
-        // TODO: Add logic so that when a element is updated it has the history of the previous data
+    public String update(@RequestBody DataElementDTO dataElementDTO) {
+        dataElementDTO.setDataId(null);
+        dataElementDTO.setZcoord(null);
         return dataElementService.update(dataElementDTO);
     }
 
-//    @DeleteMapping("/{id}")
-//    public String deleteDataElement(@PathVariable Long id) {
-//        Optional<DataElement> dataElement = dataElementService.findById(id);
-//        if (dataElement.isEmpty()) {
-//            throw new RuntimeException("DataElement not found");
-//        }
-//        dataElementService.deleteById(id);
-//        return "Deleted dataElement with id " + id;
-//    }
+    @DeleteMapping("/")
+    public String deleteByXY(@RequestParam Long pageId, @RequestParam Integer x, @RequestParam Integer y) {
+        dataElementService.deleteByXY(pageId, x, y);
+        return "Deleted dataElement and its history at pageId: " + pageId + ", xcoord: " + x + ", ycoord: " + y;
+    }
 }

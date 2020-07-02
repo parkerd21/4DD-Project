@@ -18,9 +18,9 @@ public class Book {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "BOOK_ID")
-    private Long BOOK_ID;
+    private Long bookId;
 
     @OneToMany(cascade= {CascadeType.ALL})
-    @JoinColumn(name = "pageId")
+    @JoinColumn(name = "page_id")
     private List<Page> pages;
 }
