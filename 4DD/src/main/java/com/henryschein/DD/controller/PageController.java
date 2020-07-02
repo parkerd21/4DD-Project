@@ -5,6 +5,8 @@ import com.henryschein.DD.entity.Page;
 import com.henryschein.DD.service.PageService;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("page")
 public class PageController {
@@ -20,9 +22,14 @@ public class PageController {
         return pageService.getById(pageId);
     }
 
+    @GetMapping("/all")
+    public List<Page> getAll() { return pageService.getAll(); }
+
     @PostMapping("/")
     public Page add(@RequestBody PageDTO pageDTO) {
         return pageService.add(pageDTO);
     }
+
+
 
 }

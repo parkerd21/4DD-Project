@@ -5,6 +5,8 @@ import com.henryschein.DD.dto.PageDTO;
 import com.henryschein.DD.entity.Page;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
 public class PageService {
 
@@ -19,8 +21,14 @@ public class PageService {
     }
 
     public Page add(PageDTO pageDTO) {
-        Page newPage = new Page(pageDTO);
-        pageDAO.saveAndFlush(newPage);
-        return newPage;
+        Page initialPage = new Page();
+        initialPage.setBookId(pageDTO.getBookId());
+        Page newPage = pageDAO.saveAndFlush(initialPage);
+        newPage.setDataElements(pageDTO.getDataElements());
+        return pageDAO.saveAndFlush(newPage);
+    }
+
+    public List<Page> getAll() {
+        return pageDAO.findAll();
     }
 }

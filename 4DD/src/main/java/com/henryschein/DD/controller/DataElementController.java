@@ -35,14 +35,14 @@ public class DataElementController {
 
     @GetMapping("/all")
     public List<DataElement> getAll() {
-        return dataElementService.findAll();
+        return dataElementService.getAll();
     }
 
     @PostMapping("/")
     public String add(@RequestBody DataElementDTO dataElementDTO) {
         dataElementDTO.setDataId(null);
         dataElementDTO.setZcoord(null);
-        return dataElementService.createAndAdd(dataElementDTO);
+        return dataElementService.add(dataElementDTO);
     }
 
     @PutMapping("/")

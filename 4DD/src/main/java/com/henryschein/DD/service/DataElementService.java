@@ -27,11 +27,11 @@ public class DataElementService {
         return dataElementDAO.getByXY(pageId, x, y);
     }
 
-    public List<DataElement> findAll() {
+    public List<DataElement> getAll() {
         return dataElementDAO.findAll();
     }
 
-    public String createAndAdd(DataElementDTO dataElementDTO) {
+    public String add(DataElementDTO dataElementDTO) {
         DataElement currentElement =
                 getByXY(dataElementDTO.getPageId(), dataElementDTO.getXcoord(), dataElementDTO.getYcoord());
         if (currentElement == null) {
@@ -42,16 +42,14 @@ public class DataElementService {
         }
         else
             return "Cannot create a new dataElement at that location because one already exists there." +
-                    " Try updating or a new location";
+                    " Try updating or a new X,Y location";
     }
 
     public String update(DataElementDTO dataElementDTO) {
         DataElement currentElement =
                 getByXY(dataElementDTO.getPageId(), dataElementDTO.getXcoord(), dataElementDTO.getYcoord());
-        DataElement newElement;
-
         if (currentElement != null) {
-            newElement = new DataElement(dataElementDTO);
+            DataElement newElement = new DataElement(dataElementDTO);
             newElement.setZcoord(currentElement.getZcoord() + 1);
             dataElementDAO.saveAndFlush(newElement);
             return newElement.toString();

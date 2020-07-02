@@ -9,32 +9,28 @@ import javax.persistence.*;
 import java.util.ArrayList;
 import java.util.List;
 
+@Getter
+@Setter
+@NoArgsConstructor
 @Entity
 @Table(name = "PAGE")
 public class Page {
 
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "PAGE_ID")
     private Long pageId;
 
-    @Getter
-    @Setter
     @Column(name = "BOOK_ID")
     private Long bookId;
 
-    @Getter
-    @Setter
     @OneToMany(cascade= {CascadeType.ALL})
     @JoinColumn(name = "page_id")
     private List<DataElement> dataElements;
 
     public Page(PageDTO pageDTO) {
-        // TODO: this isn't going to work with a persistant dataBase unless we save the pageCounter to the dataBase
-        this.pageId = getPageIdCounter();
-        incrementPageIdCounter();
-
+        this.pageId = pageDTO.getPageId();
         this.bookId = pageDTO.getBookId();
-
         if (pageDTO.getDataElements() == null) {
             this.dataElements = new ArrayList<>();
         }
@@ -44,24 +40,11 @@ public class Page {
         }
     }
 
-    public Page() {
-
-    }
-
-    private static Long pageIdCounter = 1L;
-    public static synchronized Long getPageIdCounter() {
-        return pageIdCounter;
-    }
-    public static synchronized void incrementPageIdCounter() {
-        pageIdCounter++;
-    }
-
-    public Long getPageId() {
-        return this.pageId;
-    }
-    public void setPageId() {
-        this.pageId = getPageIdCounter();
-        incrementPageIdCounter();
+    public void setDataElements(List<DataElement> dataElements) {
+        this.dataElements = dataElements;
+        if (this.dataElements != null) {
+            updateDataElementsPageIds();
+        }
     }
 
     @Override
