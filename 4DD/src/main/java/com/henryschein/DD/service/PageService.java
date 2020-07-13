@@ -1,23 +1,21 @@
 package com.henryschein.DD.service;
 
 import com.henryschein.DD.dao.PageDAO;
-import com.henryschein.DD.dto.DataElementDTO;
 import com.henryschein.DD.dto.PageDTO;
-import com.henryschein.DD.entity.DataElement;
 import com.henryschein.DD.entity.Page;
 import org.springframework.stereotype.Service;
 
+import javax.transaction.Transactional;
 import java.util.List;
+import java.util.Objects;
 
 @Service
 public class PageService {
 
     PageDAO pageDAO;
-    DataElementService dataElementService;
 
-    public PageService(PageDAO pageDAO, DataElementService dataElementService) {
+    public PageService(PageDAO pageDAO) {
         this.pageDAO = pageDAO;
-        this.dataElementService = dataElementService;
     }
 
     public Page getById(Long pageId) {
@@ -28,44 +26,32 @@ public class PageService {
         return pageDAO.findAll();
     }
 
-
-    public Page add(PageDTO pageDTO) {
-        if (!pageExists(pageDTO.getPageId())) {
-            Page initialPage = new Page();
-            initialPage.setBookId(pageDTO.getBookId());
-            Page newPage = pageDAO.saveAndFlush(initialPage);
-            // add dataElements one at a time
-            // TODO: check that all of the dataElements are unique coordinates (X,Y)
-            // TODO: set all z values to 1 in dataELements
-            newPage.setDataElements(pageDTO.getDataElements());
-            return pageDAO.saveAndFlush(newPage);
-        }
-        else
-            return null;
+    public Page createNewPage(Long bookId) {
+        return pageDAO.saveAndFlush(new Page(bookId));
     }
 
-    private void addDataElements(PageDTO pageDTO) {
-
-        for (DataElement dataElement : pageDTO.getDataElements()) {
-
-        }
-
-    }
-
-
-
-    public Page update(PageDTO pageDTO) {
+    public Page updateBookId(PageDTO pageDTO) {
         if (pageExists(pageDTO.getPageId())) {
-            Page initialPage = new Page(pageDTO);
+            Page initialPage = getById(pageDTO.getPageId());
+            initialPage.setBookId(pageDTO.getBookId());
             return pageDAO.saveAndFlush(initialPage);
         }
         else
             return null;
-
     }
 
     private boolean pageExists(Long pageId) {
         Page page = pageDAO.getById(pageId);
-        return page != null;
+        return Objects.nonNull(page);
+    }
+
+    @Transactional
+    public String deleteById(Long pageId) {
+        if (pageExists(pageId)) {
+            pageDAO.deleteById(pageId);
+            return "Deleted Page with id: " + pageId;
+        }
+        else
+            return "Couldn't find page with id: " + pageId + " to delete";
     }
 }

@@ -24,43 +24,42 @@ public class Page {
     @Column(name = "BOOK_ID")
     private Long bookId;
 
-    @OneToMany(cascade= {CascadeType.ALL})
-    @JoinColumn(name = "page_id")
-    private List<DataElement> dataElements;
+    @OneToMany(mappedBy = "pageId", cascade= {CascadeType.ALL})
+    //@JoinColumn(name = "page_id")
+    private List<DataElement> dataElements = new ArrayList<>();
 
-    public Page(PageDTO pageDTO) {
-        this.pageId = pageDTO.getPageId();
-        this.bookId = pageDTO.getBookId();
-        if (pageDTO.getDataElements() == null) {
-            this.dataElements = new ArrayList<>();
-        }
-        else {
-            this.dataElements = pageDTO.getDataElements();
-            updateDataElementsPageIds();
-        }
-    }
-
-    public void setDataElements(List<DataElement> dataElements) {
-        this.dataElements = dataElements;
-        if (this.dataElements != null) {
-            updateDataElementsPageIds();
-        }
+    public Page (Long bookId) {
+        this.pageId = null;
+        this.bookId = bookId;
+        this.dataElements = new ArrayList<>();
     }
 
     @Override
     public String toString() {
         StringBuilder msg = new StringBuilder();
-        msg.append("{" + "\n\tpageId: ").append(pageId).append("\n\tbookId: ").append(bookId).append("\n\tdataElements: [\n");
-        for (DataElement dataElement : dataElements) {
-            msg.append(dataElement.toString());
+        msg.append("{" + "\n\tpageId: ").append(pageId).append("\n\tbookId: ").append(bookId).append("\n\tdataElements: [");
+        try {
+            for (DataElement dataElement : dataElements) {
+                msg.append("\n").append(dataElement.toString());
+            }
+            msg.append("\n\t]\n}\n");
         }
-        msg.append("\n\t]\n}\n");
+        catch (NullPointerException e) {
+            msg.append("]\n}\n");
+        }
         return msg.toString();
     }
 
-    private void updateDataElementsPageIds() {
-        for (DataElement dataElement: this.dataElements) {
-            dataElement.setPageId(this.pageId);
-        }
-    }
+    //    public void setDataElements(List<DataElement> dataElements) {
+//        this.dataElements = dataElements;
+//        if (this.dataElements != null) {
+//            updateDataElementsPageIds();
+//        }
+//    }
+
+//    private void updateDataElementsPageIds() {
+//        for (DataElement dataElement: this.dataElements) {
+//            dataElement.setPageId(this.pageId);
+//        }
+//    }
 }

@@ -12,8 +12,7 @@ import java.util.List;
 @Getter
 @Setter
 
-public class PageDTO {
-    private Long pageId;
+public class BookDTO {
     private Long bookId;
-    private List<DataElementDTO> dataElements;
+    private List<PageDTO> pages;
 }

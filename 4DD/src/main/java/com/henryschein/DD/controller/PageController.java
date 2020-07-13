@@ -26,15 +26,15 @@ public class PageController {
     public List<Page> getAll() { return pageService.getAll(); }
 
     @PostMapping("/")
-    public Page add(@RequestBody PageDTO pageDTO) {
-        pageDTO.setPageId(null);
-        return pageService.add(pageDTO);
+    public Page createNewPage(@RequestParam Long bookId) {
+        return pageService.createNewPage(bookId);
     }
 
     @PutMapping("/")
-    public Page update(@RequestBody PageDTO pageDTO) { return pageService.update(pageDTO); }
+    public Page updateBookId(@RequestParam PageDTO pageDTO) { return pageService.updateBookId(pageDTO); }
 
-
-
-
+    @DeleteMapping("/{pageId}")
+    public String deleteById(@PathVariable Long pageId) {
+        return pageService.deleteById(pageId);
+    }
 }

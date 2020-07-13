@@ -17,10 +17,16 @@ public class DataElementDTO {
     private String value;
     private Long dataId;
 
-    public DataElementDTO(Long pageId, Integer x, Integer y, String value) {
+    public DataElementDTO(Long pageId, Integer x, Integer y) {
         this.pageId = pageId;
         this.xcoord = x;
         this.ycoord = y;
-        this.value = value;
+    }
+
+    public DataElementDTO(Long pageId, Integer x, Integer y, Integer z) {
+        this.pageId = pageId;
+        this.xcoord = x;
+        this.ycoord = y;
+        this.zcoord = z;
     }
 }

@@ -6,6 +6,7 @@ import com.henryschein.DD.service.DataElementService;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Objects;
 
 @RestController
 @RequestMapping("data_elements")
@@ -22,15 +23,17 @@ public class DataElementController {
             @RequestParam Long pageId, @RequestParam Integer x, @RequestParam Integer y,
             @RequestParam(value = "z", required = false) Integer z)
     {
-        if (z == null)
-            return dataElementService.getByXY(pageId, x, y);
-        else
-            return dataElementService.getByXYZ(pageId, x, y, z);
+        if (Objects.isNull(z)) {
+            return dataElementService.getByXY(new DataElementDTO(pageId, x, y));
+        }
+        else {
+            return dataElementService.getByXYZ(new DataElementDTO(pageId, x, y, z));
+        }
     }
 
     @GetMapping("/history")
     public List<DataElement> getHistory(@RequestParam Long pageId, @RequestParam Integer x, @RequestParam Integer y) {
-        return dataElementService.getHistory(pageId, x, y);
+        return dataElementService.getHistory(new DataElementDTO(pageId, x, y));
     }
 
     @GetMapping("/all")
@@ -39,21 +42,21 @@ public class DataElementController {
     }
 
     @PostMapping("/")
-    public DataElement add(@RequestBody DataElementDTO dataElementDTO) {
+    public DataElement createNewDataElement(@RequestBody DataElementDTO dataElementDTO) {
         dataElementDTO.setDataId(null);
-        dataElementDTO.setZcoord(null);
-        return dataElementService.add(dataElementDTO);
+        //dataElementDTO.setZcoord(null);
+        return dataElementService.createNewDataElement(dataElementDTO);
     }
 
     @PutMapping("/")
     public DataElement update(@RequestBody DataElementDTO dataElementDTO) {
         dataElementDTO.setDataId(null);
-        dataElementDTO.setZcoord(null);
+        //dataElementDTO.setZcoord(null);
         return dataElementService.update(dataElementDTO);
     }
 
     @DeleteMapping("/")
     public String deleteByXY(@RequestParam Long pageId, @RequestParam Integer x, @RequestParam Integer y) {
-        return dataElementService.deleteByXY(pageId, x, y);
+        return dataElementService.deleteByXY(new DataElementDTO(pageId, x, y));
     }
 }
