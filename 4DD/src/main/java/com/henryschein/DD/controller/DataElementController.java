@@ -41,6 +41,23 @@ public class DataElementController {
         return dataElementService.getAll();
     }
 
+    @GetMapping("/row")
+    public List<DataElement> getByRow(@RequestParam Long pageId, @RequestParam Integer rowNumber) {
+        return dataElementService.getByRow(pageId, rowNumber);
+    }
+
+    @GetMapping("/column")
+    public List<DataElement> getByColumn(@RequestParam Long pageId, @RequestParam Integer columnNumber) {
+        return dataElementService.getByColumn(pageId, columnNumber);
+    }
+
+    // TODO: endpoint for a range of DataElements
+    @GetMapping("/range")
+    public List<DataElement> getByRange(@RequestParam String range) {
+        return dataElementService.getByRange(range);
+    }
+
+
     @PostMapping("/")
     public DataElement createNewDataElement(@RequestBody DataElementDTO dataElementDTO) {
         dataElementDTO.setDataId(null);

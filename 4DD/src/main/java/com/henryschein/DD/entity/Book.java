@@ -22,12 +22,19 @@ public class Book {
     @Column(name = "BOOK_ID")
     private Long bookId;
 
+    private String title;
+
     @OneToMany(mappedBy = "bookId", cascade= {CascadeType.ALL})
     //@JoinColumn(name = "page_id")
     private List<Page> pages = new ArrayList<>();
 
     public Book(BookDTO bookDTO) {
         this.bookId = bookDTO.getBookId();
+        this.title = bookDTO.getTitle();
         this.pages = new ArrayList<>();
+    }
+
+    public Book(String title) {
+        this.title = title;
     }
 }

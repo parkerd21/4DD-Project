@@ -14,5 +14,6 @@ import java.util.List;
 
 public class BookDTO {
     private Long bookId;
+    private String title;
     private List<PageDTO> pages;
 }

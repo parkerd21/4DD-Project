@@ -27,12 +27,15 @@ public class BookController {
         return bookService.getAll();
     }
 
-    @PostMapping("/")
-    public Book createNewBook() {
-        return bookService.createNewBook();
+    @PostMapping("/{title}")
+    public Book createNewBook(@PathVariable String title) {
+        return bookService.createNewBook(title);
     }
 
-    // put
+    @PutMapping("/")
+    public Book updateBookTitle(@RequestBody BookDTO bookDTO) {
+        return bookService.updateBookTitle(bookDTO);
+    }
 
     @DeleteMapping("/{bookId}")
     public String deleteById(@PathVariable Long bookId) {

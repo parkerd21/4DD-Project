@@ -31,7 +31,9 @@ public class PageController {
     }
 
     @PutMapping("/")
-    public Page updateBookId(@RequestParam PageDTO pageDTO) { return pageService.updateBookId(pageDTO); }
+    public Page updateBookId(@RequestBody PageDTO pageDTO) {
+        return pageService.updateBookId(pageDTO);
+    }
 
     @DeleteMapping("/{pageId}")
     public String deleteById(@PathVariable Long pageId) {
