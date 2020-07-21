@@ -10,7 +10,6 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface BookDAO extends JpaRepository<Book, Long> {
 
-    @Cacheable(value = "books", key = "#bookId")
     @Query("select b from Book b where b.bookId = :id")
     Book getById(@Param("id") Long bookId);
 
