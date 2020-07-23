@@ -11,7 +11,7 @@ import java.util.Objects;
 
 @Slf4j
 @Service
-@CacheConfig(cacheNames = {"books"})
+//@CacheConfig(cacheNames = {"books"})
 public class BookCacheService {
     private BookDAO bookDAO;
     private static final String DELETE_CACHE_ALL_BOOKS_MESSAGE = "cache allBooks: deleted all books";
@@ -27,7 +27,6 @@ public class BookCacheService {
             log.info("database: retrieving book " + bookId);
             log.info("cache books: added book " + bookId);
         }
-
         else
             log.error("book " + bookId + " not found");
         return book;

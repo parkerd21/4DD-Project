@@ -36,7 +36,6 @@ public class PageController {
     }
 
     @DeleteMapping("/{pageId}")
-    public String deleteById(@PathVariable Long pageId) {
-        return pageService.deleteById(pageId);
+    public void deleteById(@PathVariable Long pageId) { pageService.deleteById(pageId);
     }
 }
