@@ -22,7 +22,7 @@ public class PageService {
         this.pageCacheService = pageCacheService;
     }
 
-    public Page getById(Long pageId) {
+    public Page getById(Integer pageId) {
         return pageCacheService.getById(pageId);
     }
 
@@ -30,7 +30,7 @@ public class PageService {
         return pageCacheService.getAll();
     }
 
-    public Page createNewPage(Long bookId) {
+    public Page createNewPage(Integer bookId) {
         return pageCacheService.createNewPage(bookId);
     }
 
@@ -46,12 +46,12 @@ public class PageService {
         }
     }
 
-    private boolean pageExists(Long pageId) {
+    private boolean pageExists(Integer pageId) {
         Page page = pageCacheService.getById(pageId);
         return Objects.nonNull(page);
     }
 
-    public void deleteById(Long pageId) {
+    public void deleteById(Integer pageId) {
         if (pageExists(pageId)) {
             pageCacheService.deleteById(pageId);
         }

@@ -18,7 +18,7 @@ public class PageController {
     }
 
     @GetMapping("/{pageId}")
-    public Page getById(@PathVariable Long pageId) {
+    public Page getById(@PathVariable Integer pageId) {
         return pageService.getById(pageId);
     }
 
@@ -26,7 +26,7 @@ public class PageController {
     public List<Page> getAll() { return pageService.getAll(); }
 
     @PostMapping("/")
-    public Page createNewPage(@RequestParam Long bookId) {
+    public Page createNewPage(@RequestParam Integer bookId) {
         return pageService.createNewPage(bookId);
     }
 
@@ -36,6 +36,6 @@ public class PageController {
     }
 
     @DeleteMapping("/{pageId}")
-    public void deleteById(@PathVariable Long pageId) { pageService.deleteById(pageId);
+    public void deleteById(@PathVariable Integer pageId) { pageService.deleteById(pageId);
     }
 }

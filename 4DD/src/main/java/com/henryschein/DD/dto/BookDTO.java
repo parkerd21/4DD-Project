@@ -13,7 +13,7 @@ import java.util.List;
 @Setter
 
 public class BookDTO {
-    private Long bookId;
+    private Integer bookId;
     private String title;
     private List<PageDTO> pages;
 }

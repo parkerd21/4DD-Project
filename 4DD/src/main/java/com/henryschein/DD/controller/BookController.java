@@ -18,7 +18,7 @@ public class BookController {
     }
 
     @GetMapping("/{bookId}")
-    public Book getById(@PathVariable Long bookId) {
+    public Book getById(@PathVariable Integer bookId) {
         return bookService.getById(bookId);
     }
 
@@ -38,7 +38,7 @@ public class BookController {
     }
 
     @DeleteMapping("/{bookId}")
-    public void deleteById(@PathVariable Long bookId) {
+    public void deleteById(@PathVariable Integer bookId) {
         bookService.deleteById(bookId);
     }
 }

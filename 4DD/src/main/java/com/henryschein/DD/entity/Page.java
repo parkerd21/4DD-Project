@@ -1,6 +1,5 @@
 package com.henryschein.DD.entity;
 
-import com.henryschein.DD.dto.PageDTO;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -19,16 +18,16 @@ public class Page {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "PAGE_ID")
-    private Long pageId;
+    private Integer pageId;
 
     @Column(name = "BOOK_ID")
-    private Long bookId;
+    private Integer bookId;
 
     @OneToMany(mappedBy = "pageId", cascade= {CascadeType.ALL})
     //@JoinColumn(name = "page_id")
     private List<DataElement> dataElements = new ArrayList<>();
 
-    public Page (Long bookId) {
+    public Page (Integer bookId) {
         this.pageId = null;
         this.bookId = bookId;
         this.dataElements = new ArrayList<>();

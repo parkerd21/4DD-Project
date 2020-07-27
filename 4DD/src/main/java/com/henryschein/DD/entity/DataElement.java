@@ -16,7 +16,7 @@ import javax.persistence.*;
 @Table(name = "DATA_ELEMENT")
 public class DataElement {
     @Column(name = "PAGE_ID")
-    private Long pageId;
+    private Integer pageId;
 
     private Integer xcoord;
     private Integer ycoord;
@@ -26,7 +26,8 @@ public class DataElement {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "DATA_ID")
-    private Long dataId;
+    private Integer dataId;
+
 
     public DataElement(String value, Integer xcoord, Integer ycoord) {
         this.value = value;
@@ -46,12 +47,12 @@ public class DataElement {
     @Override
     public String toString() {
         return "{" +
-                "\n\tpageId: " + pageId +
-                "\n\txcoord: " + xcoord +
-                "\n\tycoord: " + ycoord +
-                "\n\tzcoord: " + zcoord +
-                "\n\tvalue: " + value +
-                "\n\tdataId: " + dataId +
-                "\n}\n";
+                " pageId: " + pageId +
+                ", xcoord: " + xcoord +
+                ", ycoord: " + ycoord +
+                ", zcoord: " + zcoord +
+                ", value: " + value +
+                ", dataId: " + dataId +
+                " }";
     }
 }

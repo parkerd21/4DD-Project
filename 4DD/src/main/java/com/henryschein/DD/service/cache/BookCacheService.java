@@ -11,7 +11,6 @@ import java.util.Objects;
 
 @Slf4j
 @Service
-//@CacheConfig(cacheNames = {"books"})
 public class BookCacheService {
     private BookDAO bookDAO;
     private static final String DELETE_CACHE_ALL_BOOKS_MESSAGE = "cache allBooks: deleted all books";
@@ -21,7 +20,7 @@ public class BookCacheService {
     }
 
     @Cacheable(value = "books", key = "#bookId")
-    public Book getById(Long bookId) {
+    public Book getById(Integer bookId) {
         Book book = bookDAO.getById(bookId);
         if (Objects.nonNull(book)) {
             log.info("database: retrieving book " + bookId);
@@ -52,7 +51,7 @@ public class BookCacheService {
             @CacheEvict(value = "allBooks", allEntries = true),
             @CacheEvict(value = "books", key = "#bookId")
     })
-    public void deleteById(Long bookId) {
+    public void deleteById(Integer bookId) {
             log.info(DELETE_CACHE_ALL_BOOKS_MESSAGE);
             log.info("database: deleted book " + bookId);
             log.info("cache books: deleted book " + bookId);

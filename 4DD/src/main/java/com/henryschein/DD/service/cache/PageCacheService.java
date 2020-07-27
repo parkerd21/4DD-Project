@@ -25,7 +25,7 @@ public class PageCacheService {
     }
 
     @Cacheable(value = "pages", key = "#pageId")
-    public Page getById(Long pageId) {
+    public Page getById(Integer pageId) {
         Page page = pageDAO.getById(pageId);
         if (Objects.nonNull(page)) {
             log.info("database: retrieving page " + pageId);
@@ -45,7 +45,7 @@ public class PageCacheService {
     }
 
     @CacheEvict(value = "allPages", allEntries = true)
-    public Page createNewPage(Long bookId) {
+    public Page createNewPage(Integer bookId) {
         Page page = pageDAO.saveAndFlush(new Page(bookId));
         log.info(DELETE_CACHE_ALL_PAGES_MESSAGE);
         log.info("database: added new page " + page.getPageId());
@@ -67,7 +67,7 @@ public class PageCacheService {
             @CacheEvict(value = "allPages", allEntries = true),
             @CacheEvict(value = "pages", key = "#pageId")
     })
-    public void deleteById(Long pageId) {
+    public void deleteById(Integer pageId) {
         log.info(DELETE_CACHE_ALL_PAGES_MESSAGE);
         log.info("database: deleted page " + pageId);
         log.info("cache pages: deleted page " + pageId);

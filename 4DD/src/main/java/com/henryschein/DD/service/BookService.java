@@ -23,7 +23,7 @@ public class BookService {
         this.bookCacheService = bookCacheService;
     }
 
-    public Book getById(Long bookId) {
+    public Book getById(Integer bookId) {
         return bookCacheService.getById(bookId);
     }
 
@@ -31,7 +31,7 @@ public class BookService {
         return bookCacheService.createNewBook(title);
     }
 
-    private boolean bookExists(Long bookId) {
+    private boolean bookExists(Integer bookId) {
         Book book = bookCacheService.getById(bookId);
         return Objects.nonNull(book);
     }
@@ -40,7 +40,7 @@ public class BookService {
         return bookCacheService.getAll();
     }
 
-    public void deleteById(Long bookId) {
+    public void deleteById(Integer bookId) {
         if (bookExists(bookId))
             bookCacheService.deleteById(bookId);
         else
