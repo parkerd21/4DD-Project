@@ -55,4 +55,9 @@ public class DataElement {
                 ", dataId: " + dataId +
                 " }";
     }
+
+    @Transient
+    public String getPageIdXY() {
+        return pageId.toString() + xcoord + ycoord;
+    }
 }

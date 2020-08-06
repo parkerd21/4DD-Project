@@ -1,7 +1,10 @@
 package com.henryschein.DD.service;
 
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import com.henryschein.DD.dao.PageDAO;
 import com.henryschein.DD.dto.PageDTO;
+import com.henryschein.DD.entity.DataElement;
 import com.henryschein.DD.entity.Page;
 import com.henryschein.DD.service.cache.PageCacheService;
 import lombok.extern.slf4j.Slf4j;
@@ -16,6 +19,8 @@ public class PageService {
 
     private PageDAO pageDAO;
     private PageCacheService pageCacheService;
+    private Cache<Integer, DataElement> pageCache = Caffeine.newBuilder()
+            .build();
 
     public PageService(PageDAO pageDAO, PageCacheService pageCacheService) {
         this.pageDAO = pageDAO;
