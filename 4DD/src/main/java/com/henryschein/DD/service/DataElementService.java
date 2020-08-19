@@ -4,6 +4,7 @@ import com.henryschein.DD.TheCacheManager;
 import com.henryschein.DD.dao.DataElementDAO;
 import com.henryschein.DD.dto.DataElementDTO;
 import com.henryschein.DD.entity.DataElement;
+import com.henryschein.DD.service.cache.PageCacheService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
@@ -16,14 +17,13 @@ import java.util.stream.Collectors;
 public class DataElementService {
 
     private final DataElementDAO dataElementDAO;
-    private final PageService pageService;
     private final TheCacheManager cacheManager;
+    private final PageCacheService pageCacheService;
 
-
-    public DataElementService(DataElementDAO theDataElementDAO, PageService pageService, TheCacheManager cacheManager) {
+    public DataElementService(DataElementDAO theDataElementDAO, TheCacheManager cacheManager, PageCacheService pageCacheService) {
         this.dataElementDAO = theDataElementDAO;
-        this.pageService = pageService;
         this.cacheManager = cacheManager;
+        this.pageCacheService = pageCacheService;
     }
 
     public DataElement getByCoordinates(DataElementDTO dto) {
@@ -69,18 +69,19 @@ public class DataElementService {
             log.info("database: retrieving all dataElements");
             cacheManager.getDataElementListCache().put(TheCacheManager.DATA_ELEMENT_ALL_KEY, dataElements);
             log.info("dataElementListCache: saved all dataElements");
-            saveListOfDataElementsToCache(dataElements);
+            cacheManager.saveListOfDataElementsToCache(dataElements);
         } else {
             log.info("dataElementListCache: retrieving all dataElements");
         }
         return dataElements;
     }
 
-    public DataElement createNewDataElement(DataElementDTO dataElementDTO) {
-        DataElement dataElement = getByCoordinates(dataElementDTO);
+    public DataElement createNewDataElement(DataElementDTO dto) {
+        DataElement dataElement = getByCoordinates(dto);
         if (dataElement == null) {
-            dataElementDTO.setZcoord(1);
-            DataElement newElement = new DataElement(dataElementDTO);
+            dto.setZcoord(1);
+            DataElement newElement = new DataElement(dto);
+            pageCacheService.invalidatePageCaches(dto.getPageId());
             cacheManager.getDataElementListCache().invalidateAll();
             newElement = dataElementDAO.saveAndFlush(newElement);
             log.info("dataBase: saved - " + newElement.toString());
@@ -99,6 +100,7 @@ public class DataElementService {
             Map<Integer, DataElement> map = cacheManager.getDataElementCache().getIfPresent(dto.getPageIdXY());
             assert map != null;
             map.put(newElement.getZcoord(), newElement);
+            pageCacheService.invalidatePageCaches(dto.getPageId());
             log.info("dataElementCache: saved -  " + newElement.toString());
             cacheManager.getDataElementListCache().invalidateAll();
             log.info("dataElementListCache: deleted - all contents");
@@ -127,6 +129,7 @@ public class DataElementService {
             Map<Integer, DataElement> map = cacheManager.getDataElementCache().getIfPresent(dto.getPageIdXY());
             assert map != null;
             map.remove(dataElement.getZcoord());
+            pageCacheService.invalidatePageCaches(dto.getPageId());
             log.info("dataElementCache: deleted - " + dataElement.toString());
             cacheManager.getDataElementListCache().invalidateAll();
             log.info("dataElementListCache: deleted - all contents");
@@ -153,21 +156,9 @@ public class DataElementService {
         return dataElementList;
     }
 
-    private void saveListOfDataElementsToCache(List<DataElement> dataElements) {
-        for (DataElement dataElement : dataElements) {
-            Map<Integer, DataElement> map = cacheManager.getDataElementCache().getIfPresent(dataElement.getPageIdXY());
-            if (Objects.isNull(map)) {
-                map = new HashMap<>();
-            }
-            map.put(dataElement.getZcoord(), dataElement);
-            cacheManager.getDataElementCache().put(dataElement.getPageIdXY(), map);
-            log.info("dataElementCache: saved - " + dataElement.toString());
-        }
-    }
-
     private List<DataElement> savePrepareAndLogList(String key, List<DataElement> dataElementList) {
         if (!dataElementList.isEmpty()) {
-            saveListOfDataElementsToCache(dataElementList);
+            cacheManager.saveListOfDataElementsToCache(dataElementList);
             dataElementList = removeHistoryFromResult(dataElementList);
             cacheManager.getDataElementListCache().put(key, dataElementList);
             log.info("dataElementListCache: saved - list " + dataElementList.toString());

@@ -1,10 +1,6 @@
 package com.henryschein.DD.service;
 
-import com.github.benmanes.caffeine.cache.Cache;
-import com.github.benmanes.caffeine.cache.Caffeine;
-import com.henryschein.DD.dao.PageDAO;
 import com.henryschein.DD.dto.PageDTO;
-import com.henryschein.DD.entity.DataElement;
 import com.henryschein.DD.entity.Page;
 import com.henryschein.DD.service.cache.PageCacheService;
 import lombok.extern.slf4j.Slf4j;
@@ -16,14 +12,9 @@ import java.util.Objects;
 @Slf4j
 @Service
 public class PageService {
+    private final PageCacheService pageCacheService;
 
-    private PageDAO pageDAO;
-    private PageCacheService pageCacheService;
-    private Cache<Integer, DataElement> pageCache = Caffeine.newBuilder()
-            .build();
-
-    public PageService(PageDAO pageDAO, PageCacheService pageCacheService) {
-        this.pageDAO = pageDAO;
+    public PageService(PageCacheService pageCacheService) {
         this.pageCacheService = pageCacheService;
     }
 

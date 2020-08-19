@@ -1,9 +1,13 @@
 package com.henryschein.DD.service.cache;
 
+import com.henryschein.DD.TheCacheManager;
 import com.henryschein.DD.dao.BookDAO;
 import com.henryschein.DD.entity.Book;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.cache.annotation.*;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.CachePut;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -13,10 +17,12 @@ import java.util.Objects;
 @Service
 public class BookCacheService {
     private BookDAO bookDAO;
+    private final TheCacheManager cacheManager;
     private static final String DELETE_CACHE_ALL_BOOKS_MESSAGE = "cache allBooks: deleted all books";
 
-    public BookCacheService(BookDAO bookDAO) {
+    public BookCacheService(BookDAO bookDAO, TheCacheManager cacheManager) {
         this.bookDAO = bookDAO;
+        this.cacheManager = cacheManager;
     }
 
     @Cacheable(value = "books", key = "#bookId")
