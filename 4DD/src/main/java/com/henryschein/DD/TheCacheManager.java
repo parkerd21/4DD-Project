@@ -31,7 +31,7 @@ public class TheCacheManager {
 
     public static final String DATA_ELEMENT_ALL_KEY = "getAllKey";
 
-    public void saveListOfDataElementsToCache(List<DataElement> dataElements) {
+    public void saveListOfDataElementsToDataElementCache(List<DataElement> dataElements) {
         for (DataElement dataElement : dataElements) {
             Map<Integer, DataElement> map = dataElementCache.getIfPresent(dataElement.getPageIdXY());
             if (Objects.isNull(map)) {

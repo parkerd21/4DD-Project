@@ -30,10 +30,7 @@ public class DataElementService {
         Map<Integer, DataElement> map = getDataElementMap(dto);
         if (Objects.isNull(map))
             return null;
-        if (Objects.nonNull(dto.getZcoord()))
-            return getByXYZ(map, dto.getZcoord());
-        else
-            return getByXY(map);
+        return Objects.nonNull(dto.getZcoord()) ? getByXYZ(map, dto.getZcoord()) : getByXY(map);
     }
 
     private DataElement getByXY(Map<Integer, DataElement> map) {
@@ -48,12 +45,9 @@ public class DataElementService {
     private Map<Integer, DataElement> getDataElementMap(DataElementDTO dto) {
         Map<Integer, DataElement> map = cacheManager.getDataElementCache().getIfPresent(dto.getPageIdXY());
         if (Objects.isNull(map)) {
-            List<DataElement> history = dataElementDAO.getHistory(dto.getPageId(), dto.getXcoord(), dto.getYcoord());
+            List<DataElement> history = getHistory(dto);
             if (!history.isEmpty()) {
-                log.info("database: retrieving - list " + dto.getPageId() + " [" + dto.getXcoord() + "," + dto.getYcoord() + "] " + history.toString());
                 map = history.stream().collect(Collectors.toMap(DataElement::getZcoord, dataElement -> dataElement));
-                cacheManager.getDataElementCache().put(dto.getPageIdXY(), map);
-                log.info("dataElementCache: saved - map " + dto.getPageId() + " [" + dto.getXcoord() + "," + dto.getYcoord() + "] " + history.toString());
             }
         } else {
             log.info("dataElementCache: retrieving map - " + dto.getPageId() + " [" + dto.getXcoord() + "," + dto.getYcoord() + "] " + map.toString());
@@ -69,7 +63,7 @@ public class DataElementService {
             log.info("database: retrieving all dataElements");
             cacheManager.getDataElementListCache().put(TheCacheManager.DATA_ELEMENT_ALL_KEY, dataElements);
             log.info("dataElementListCache: saved all dataElements");
-            cacheManager.saveListOfDataElementsToCache(dataElements);
+            cacheManager.saveListOfDataElementsToDataElementCache(dataElements);
         } else {
             log.info("dataElementListCache: retrieving all dataElements");
         }
@@ -115,7 +109,12 @@ public class DataElementService {
         List<DataElement> dataElementList = cacheManager.getDataElementListCache().getIfPresent(key);
         if (dataElementList == null || dataElementList.isEmpty()) {
             dataElementList = dataElementDAO.getHistory(dto.getPageId(), dto.getXcoord(), dto.getYcoord());
-            dataElementList = savePrepareAndLogList(key, dataElementList);
+            log.info("database: retrieving - list " + dto.getPageId() + " [" + dto.getXcoord() + "," + dto.getYcoord() + "] " + dataElementList.toString());
+            if (!dataElementList.isEmpty()) {
+                cacheManager.saveListOfDataElementsToDataElementCache(dataElementList);
+                cacheManager.getDataElementListCache().put(key, dataElementList);
+                log.info("dataElementListCache: saved - list " + dataElementList.toString());
+            }
         }
         return dataElementList;
     }
@@ -158,7 +157,7 @@ public class DataElementService {
 
     private List<DataElement> savePrepareAndLogList(String key, List<DataElement> dataElementList) {
         if (!dataElementList.isEmpty()) {
-            cacheManager.saveListOfDataElementsToCache(dataElementList);
+            cacheManager.saveListOfDataElementsToDataElementCache(dataElementList);
             dataElementList = removeHistoryFromResult(dataElementList);
             cacheManager.getDataElementListCache().put(key, dataElementList);
             log.info("dataElementListCache: saved - list " + dataElementList.toString());
