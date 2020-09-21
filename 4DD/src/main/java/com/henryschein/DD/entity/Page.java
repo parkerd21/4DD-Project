@@ -48,17 +48,4 @@ public class Page {
         }
         return msg.toString();
     }
-
-    //    public void setDataElements(List<DataElement> dataElements) {
-//        this.dataElements = dataElements;
-//        if (this.dataElements != null) {
-//            updateDataElementsPageIds();
-//        }
-//    }
-
-//    private void updateDataElementsPageIds() {
-//        for (DataElement dataElement: this.dataElements) {
-//            dataElement.setPageId(this.pageId);
-//        }
-//    }
 }

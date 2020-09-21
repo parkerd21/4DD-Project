@@ -21,12 +21,12 @@ public class DataElementController {
     public DataElement getByCoords(
             @RequestParam Integer pageId, @RequestParam Integer x, @RequestParam Integer y,
             @RequestParam(value = "z", required = false) Integer z) {
-        return dataElementService.getByCoordinates(new DataElementDTO(pageId, x, y, z));
+        return dataElementService.getDataElement(new DataElementDTO(pageId, x, y, z));
     }
 
     @GetMapping("/history")
     public List<DataElement> getHistory(@RequestParam Integer pageId, @RequestParam Integer x, @RequestParam Integer y) {
-        return dataElementService.getHistory(new DataElementDTO(pageId, x, y));
+        return dataElementService.getDataElementListByXY(new DataElementDTO(pageId, x, y));
     }
 
     @GetMapping("/all")

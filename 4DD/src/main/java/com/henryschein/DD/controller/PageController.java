@@ -32,10 +32,11 @@ public class PageController {
 
     @PutMapping("/")
     public Page updateBookId(@RequestBody PageDTO pageDTO) {
-        return pageService.updateBookId(pageDTO);
+        return pageService.updatePageWithBookId(pageDTO);
     }
 
     @DeleteMapping("/{pageId}")
-    public void deleteById(@PathVariable Integer pageId) { pageService.deleteById(pageId);
+    public void deleteById(@PathVariable Integer pageId) {
+        pageService.deletePageById(pageId);
     }
 }
