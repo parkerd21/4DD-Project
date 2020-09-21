@@ -23,7 +23,7 @@ public interface DataElementDAO extends JpaRepository<DataElement, Integer> {
     DataElement getByXY(@Param("pageId") Integer pageId, @Param("x") Integer x, @Param("y") Integer y);
 
     @Query("SELECT d FROM DataElement d WHERE d.xcoord = :x AND d.ycoord = :y AND d.pageId = :pageId")
-    List<DataElement> getHistory(@Param("pageId") Integer pageId, @Param("x") Integer x, @Param("y") Integer y);
+    List<DataElement> getDataElementListByXY(@Param("pageId") Integer pageId, @Param("x") Integer x, @Param("y") Integer y);
 
     @Modifying
     @Query("DELETE FROM DataElement d WHERE d.xcoord = :x AND d.ycoord = :y AND d.pageId = :pageId")

@@ -20,20 +20,13 @@ public class DataElementController {
     @GetMapping("/")
     public DataElement getByCoords(
             @RequestParam Integer pageId, @RequestParam Integer x, @RequestParam Integer y,
-            @RequestParam(value = "z", required = false) Integer z)
-    {
-        return dataElementService.getByCoordinates(new DataElementDTO(pageId, x, y, z));
-//        if (Objects.isNull(z)) {
-//            return dataElementService.getByXY(new DataElementDTO(pageId, x, y));
-//        }
-//        else {
-//            return dataElementService.getByXYZ(new DataElementDTO(pageId, x, y, z));
-//        }
+            @RequestParam(value = "z", required = false) Integer z) {
+        return dataElementService.getDataElement(new DataElementDTO(pageId, x, y, z));
     }
 
     @GetMapping("/history")
     public List<DataElement> getHistory(@RequestParam Integer pageId, @RequestParam Integer x, @RequestParam Integer y) {
-        return dataElementService.getHistory(new DataElementDTO(pageId, x, y));
+        return dataElementService.getDataElementListByXY(new DataElementDTO(pageId, x, y));
     }
 
     @GetMapping("/all")
@@ -69,11 +62,11 @@ public class DataElementController {
     public DataElement update(@RequestBody DataElementDTO dataElementDTO) {
         dataElementDTO.setDataId(null);
         dataElementDTO.setZcoord(null);
-        return dataElementService.update(dataElementDTO);
+        return dataElementService.updateDataElement(dataElementDTO);
     }
 
     @DeleteMapping("/")
-    public String deleteByXY(@RequestParam Integer pageId, @RequestParam Integer x, @RequestParam Integer y) {
-        return dataElementService.deleteByXY(new DataElementDTO(pageId, x, y));
+    public void deleteByXY(@RequestParam Integer pageId, @RequestParam Integer x, @RequestParam Integer y) {
+        dataElementService.deleteByXY(new DataElementDTO(pageId, x, y));
     }
 }

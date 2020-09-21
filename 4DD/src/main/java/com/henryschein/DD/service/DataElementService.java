@@ -1,152 +1,182 @@
 package com.henryschein.DD.service;
 
-import com.henryschein.DD.DataIdMapper;
+import com.henryschein.DD.TheCacheManager;
 import com.henryschein.DD.dao.DataElementDAO;
 import com.henryschein.DD.dto.DataElementDTO;
 import com.henryschein.DD.entity.DataElement;
-import com.henryschein.DD.service.cache.DataElementCacheService;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import javax.transaction.Transactional;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
 public class DataElementService {
 
-    private DataElementDAO dataElementDAO;
-    private DataElementCacheService dataElementCacheService;
-    private DataIdMapper dataIdMapper;
+    private final DataElementDAO dataElementDAO;
+    private final TheCacheManager cacheManager;
 
-    @Autowired
-    public DataElementService(DataElementDAO theDataElementDAO, DataElementCacheService dataElementCacheService, DataIdMapper dataIdMapper) {
+    public DataElementService(DataElementDAO theDataElementDAO, TheCacheManager cacheManager) {
         this.dataElementDAO = theDataElementDAO;
-        this.dataElementCacheService = dataElementCacheService;
-        this.dataIdMapper = dataIdMapper;
+        this.cacheManager = cacheManager;
     }
 
-    public DataElement getById(Integer dataId) {
-        return dataElementCacheService.getById(dataId);
+    public DataElement getDataElement(DataElementDTO dto) {
+        DataElement dataElement = cacheManager.retrieveDataElement(dto);
+        if (Objects.isNull(dataElement)) {
+            dataElement = getDataElementByXY(dto);
+            if (dataElement != null) {
+                log.info("database: retrieved dataElement " + dataElement.toString());
+            } else {
+                log.info("database: dataElement not found " + dto.toString());
+            }
+        }
+        return dataElement;
     }
 
-    public DataElement getByCoordinates(DataElementDTO dto) {
-        if (Objects.nonNull(dto.getZcoord())) {
-            return getByXYZ(dto);
-        }
-        else {
-            return getByXY(dto);
-        }
-    }
-
-    private DataElement getByXY(DataElementDTO dto) {
-        if (dataIdMapper.containsXY(dto.getPageIdXY())) {
-            return dataElementCacheService.getById(dataIdMapper.getValueFromXY(dto.getPageIdXY()));
-        }
-        else {
-            DataElement dataElement = dataElementDAO.getByXY(dto.getPageId(), dto.getXcoord(), dto.getYcoord());
-            log.info("database: retrieving dataElement " + dataElement.toString());
-            dto.setZcoord(dataElement.getZcoord());
-            dataElementCacheService.saveToCache(dataElement);
-            dataIdMapper.addXYkeyValuePair(dto.getPageIdXY(), dataElement.getDataId());
-            dataIdMapper.addXYZkeyValuePair(dto.getPageIdXYZ(), dataElement.getDataId());
-            return dataElement;
+    private DataElement getDataElementByXY(DataElementDTO dto) {
+        List<DataElement> dataElementList = dataElementDAO.getDataElementListByXY(dto.getPageId(), dto.getXcoord(), dto.getYcoord());
+        if (Objects.nonNull(dataElementList) && !dataElementList.isEmpty()) {
+            log.info("database: retrieved list " + prettyPrintCoordsAndPageId(dto) + dataElementList.toString());
+            cacheManager.saveDataElementListToDataElementCache(dataElementList);
+            return getDataElementFromList(dataElementList, dto);
+        } else {
+            return null;
         }
     }
 
-    private DataElement getByXYZ(DataElementDTO dto) {
-        if (dataIdMapper.containsXYZ(dto.getPageIdXYZ())) {
-            return dataElementCacheService.getById(dataIdMapper.getValueFromXYZ(dto.getPageIdXYZ()));
+    public List<DataElement> getDataElementListByXY(DataElementDTO dto) {
+        String key = "getByXY" + dto.getPageIdXY();
+        List<DataElement> dataElementList = cacheManager.retrieveDataElementList(key);
+        if (Objects.isNull(dataElementList) || dataElementList.isEmpty()) {
+            dataElementList = dataElementDAO.getDataElementListByXY(dto.getPageId(), dto.getXcoord(), dto.getYcoord());
+            if (!dataElementList.isEmpty()) {
+                log.info("database: retrieved list " + prettyPrintCoordsAndPageId(dto) + dataElementList.toString());
+                cacheManager.saveDataElementListToDataElementCache(dataElementList);
+                cacheManager.saveDataElementListToListCache(key, dataElementList);
+            } else {
+                log.info("database: could not find dataElement " + dto.toString());
+            }
         }
-        else {
-            DataElement dataElement =
-                    dataElementDAO.getByXYZ(dto.getPageId(), dto.getXcoord(), dto.getYcoord(), dto.getZcoord());
-            log.info("database: retrieving dataElement " + dataElement.toString());
-            dataElementCacheService.saveToCache(dataElement);
-            dataIdMapper.addXYZkeyValuePair(dto.getPageIdXYZ(), dataElement.getDataId());
-            return dataElement;
-        }
+        return dataElementList;
     }
 
     public List<DataElement> getAll() {
-        return dataElementCacheService.getAll();
+        List<DataElement> dataElements = dataElementDAO.findAll();
+        log.info("database: retrieving all dataElements");
+        return dataElements;
     }
 
-    public DataElement createNewDataElement(DataElementDTO dataElementDTO) {
-        DataElement dataElement = getByCoordinates(dataElementDTO);
+    public DataElement createNewDataElement(DataElementDTO dto) {
+        DataElement dataElement = getDataElement(dto);
         if (dataElement == null) {
-            dataElementDTO.setZcoord(0);
-            DataElement newElement = new DataElement(dataElementDTO);
-            return dataElementDAO.saveAndFlush(newElement);
-        }
-        else
+            dto.setZcoord(1);
+            DataElement newElement = new DataElement(dto);
+            try {
+                newElement = dataElementDAO.saveAndFlush(newElement);
+                log.info("database: added new dataElement " + newElement.toString());
+                return newElement;
+            } catch (Exception e) {
+                log.error("database: failed to create dataElement in page " + dto.getPageId());
+                return null;
+            }
+        } else {
+            log.error("database: failed to create dataElement in page " + dto.getPageId());
             return null;
+        }
     }
 
-    public DataElement update(DataElementDTO dataElementDTO) {
-        DataElement dataElement = getByCoordinates(dataElementDTO);
+    public DataElement updateDataElement(DataElementDTO dto) {
+        DataElement dataElement = getDataElement(dto);
         if (dataElement != null) {
-            DataElement newElement = new DataElement(dataElementDTO);
+            DataElement newElement = new DataElement(dto);
             newElement.setZcoord(dataElement.getZcoord() + 1);
-            dataIdMapper.removeXY(dataElementDTO.getPageIdXY());
-            return dataElementCacheService.update(newElement);
+            newElement = dataElementDAO.saveAndFlush(newElement);
+            log.info("dataBase: updated/added dataElement " + newElement.toString());
+            cacheManager.updateDataElementCacheRefresh(newElement, dto.getPageIdXY());
+            return newElement;
         }
         else
             return null;
-    }
-
-    // TODO: Test with postMan
-    public List<DataElement> getHistory(DataElementDTO dto) {
-        return dataElementCacheService.getHistory(dto);
     }
 
     @Transactional
-    public String deleteByXY(DataElementDTO dto) {
-        if (dataElementExists(dto)) {
+    public void deleteByXY(DataElementDTO dto) {
+        DataElement dataElement = getDataElement(dto);
+        if (dataElement != null) {
             dataElementDAO.deleteByXY(dto.getPageId(), dto.getXcoord(), dto.getYcoord());
-            return "Deleted dataElement and its history at pageId: " + dto.getPageId() + ", xcoord: " +
-                    dto.getXcoord() + ", ycoord: " + dto.getYcoord();
+            log.info("dataBase: deleted dataElements at  " + prettyPrintCoordsAndPageId(dto));
+            cacheManager.invalidateDataElementCache(dto);
+            cacheManager.invalidateDataElementListCache();
         }
-        else
-            return "Couldn't find dataElement to delete at pageId: " + dto.getPageId() + ", xcoord: " +
-                    dto.getXcoord() + ", ycoord: " + dto.getYcoord();
-    }
-
-    public boolean dataElementExists(DataElementDTO dto) {
-        DataElement dataElement = dataElementDAO.getByXY(dto.getPageId(), dto.getXcoord(), dto.getYcoord());
-        return Objects.nonNull(dataElement);
     }
 
     public List<DataElement> getByRow(Integer pageId, Integer rowNumber) {
-        List<DataElement> rowWithHistory = dataElementDAO.getByRow(pageId, rowNumber);
-        return removeHistoryFromResult(rowWithHistory);
+        String key = "getByRow" + pageId + rowNumber;
+        List<DataElement> dataElementList = cacheManager.retrieveDataElementList(key);
+        if (dataElementList == null || dataElementList.isEmpty()) {
+            dataElementList = dataElementDAO.getByRow(pageId, rowNumber);
+            if (dataElementList != null && !dataElementList.isEmpty()) {
+                log.info("database: retrieved row: " + rowNumber + " from page " + pageId);
+                cacheManager.saveDataElementListToDataElementCache(dataElementList);
+                dataElementList = removeHistoryFromResult(dataElementList);
+                cacheManager.saveDataElementListToListCache(key, dataElementList);
+            } else {
+                log.info("database: no dataElements to retrieve in row: " + rowNumber + " from page " + pageId);
+            }
+        }
+        return dataElementList;
     }
 
     public List<DataElement> getByColumn(Integer pageId, Integer columnNumber) {
-        List<DataElement> rowWithHistory = dataElementDAO.getByColumn(pageId, columnNumber);
-        return removeHistoryFromResult(rowWithHistory);
+        String key = "getByColumn" + pageId + columnNumber;
+        List<DataElement> dataElementList = cacheManager.retrieveDataElementList(key);
+        if (dataElementList == null || dataElementList.isEmpty()) {
+            dataElementList = dataElementDAO.getByColumn(pageId, columnNumber);
+            if (dataElementList != null && !dataElementList.isEmpty()) {
+                log.info("database: retrieved column: " + columnNumber + " from page " + pageId);
+                cacheManager.saveDataElementListToDataElementCache(dataElementList);
+                dataElementList = removeHistoryFromResult(dataElementList);
+                cacheManager.saveDataElementListToListCache(key, dataElementList);
+            } else {
+                log.info("database: no dataElements to retrieve in column: " + columnNumber + " from page " + pageId);
+            }
+        }
+        return dataElementList;
+    }
+
+
+    // TODO:
+    public List<DataElement> getByRange(String range) {
+        return null;
     }
 
     private List<DataElement> removeHistoryFromResult(List<DataElement> rowWithHistory) {
-        HashMap<String, DataElement> completedRow = new HashMap<>();
-        for (DataElement dataElement: rowWithHistory) {
-            String key = dataElement.getPageId().toString() + dataElement.getXcoord() + dataElement.getYcoord();
+        Map<String, DataElement> completedRow = new HashMap<>();
+        for (DataElement dataElement : rowWithHistory) {
+            String key = dataElement.getPageIdXY();
             if (completedRow.containsKey(key)) {
                 if (completedRow.get(key).getZcoord() < dataElement.getZcoord())
                     completedRow.put(key, dataElement);
-            }
-            else
+            } else
                 completedRow.put(key, dataElement);
         }
         return new ArrayList<>(completedRow.values());
     }
 
-    // TODO:
-    public List<DataElement> getByRange(String range) {
-        return null;
+    private DataElement getDataElementFromList(List<DataElement> dataElementList, DataElementDTO dto) {
+        Map<Integer, DataElement> map = dataElementList.stream().collect(Collectors.toMap(DataElement::getZcoord, dataElement -> dataElement));
+        if (Objects.isNull(dto.getZcoord())) {
+            Integer maxZvalue = Collections.max(map.keySet());
+            return map.get(maxZvalue);
+        } else {
+            return map.get(dto.getZcoord());
+        }
+    }
+
+    public static String prettyPrintCoordsAndPageId(DataElementDTO dto) {
+        return "" + dto.getPageId() + ": [" + dto.getXcoord() + "," + dto.getYcoord() + "]";
     }
 }
