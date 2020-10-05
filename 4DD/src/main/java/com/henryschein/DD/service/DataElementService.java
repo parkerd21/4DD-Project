@@ -6,9 +6,11 @@ import com.henryschein.DD.dto.DataElementDTO;
 import com.henryschein.DD.entity.DataElement;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 import javax.transaction.Transactional;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -147,9 +149,95 @@ public class DataElementService {
         return dataElementList;
     }
 
+    public List<DataElement> getByRange(Integer pageId, String range) {
+        String key = "getByRange" + pageId + range;
+        List<DataElement> dataElementList = cacheManager.retrieveDataElementList(key);
+        if (dataElementList == null || dataElementList.isEmpty()) {
+            String tempString = removeLeadingAndTrailingCharacterFromString(range, '[', ']');
+            String[] stringArray = StringUtils.commaDelimitedListToStringArray(tempString);
+            dataElementList = getDataElementListByRange(pageId, stringArray);
+            if (dataElementList != null && !dataElementList.isEmpty()) {
+                log.info("database: retrieved range of dataElements [" + stringArray[0] + ", " + stringArray[1] + "]");
+                cacheManager.saveDataElementListToDataElementCache(dataElementList);
+                dataElementList = removeHistoryFromResult(dataElementList);
+                cacheManager.saveDataElementListToListCache(key, dataElementList);
+            } else {
+                log.info("database: no dataElements to retrieve in that range: [" + stringArray[0] + ", " + stringArray[1] + "]");
+            }
+        }
+        return dataElementList;
+    }
 
-    // TODO:
-    public List<DataElement> getByRange(String range) {
+    private String removeLeadingAndTrailingCharacterFromString(String range, char leadingChar, char trailingChar) {
+        String tempString = StringUtils.trimLeadingCharacter(range, leadingChar);
+        return StringUtils.trimTrailingCharacter(tempString, trailingChar);
+    }
+
+    private List<Integer> convertStringToListOfIntegers(String range) {
+        List<String> stringList = Arrays.asList(StringUtils.delimitedListToStringArray(range, ".."));
+        List<Integer> integerList = new ArrayList<>();
+        int lastValue = Integer.parseInt(stringList.get(stringList.size() - 1));
+        int firstValue = Integer.parseInt(stringList.get(0));
+        for (int i = firstValue; i <= lastValue; i++) {
+            integerList.add(i);
+        }
+        return integerList;
+    }
+//     TODO:
+//     "=[1,2] + [1,3]"
+//     "=SUM([1..3,1..6])"
+//     "=AVG([3,3])"
+//     "=MIN(3,1..10])"
+//     "=MAX(3,1..10])"
+
+    //TODO: do some more testing
+    public Double evaluateEquationString(Integer pageId, String equation) {
+        equation = StringUtils.trimLeadingCharacter(equation, '=').toUpperCase();
+
+        if (equation.startsWith("SUM")) {
+            return evaluateSumEquation(pageId, equation);
+        } else if (equation.startsWith("AVG")) {
+            calculateAvg();
+        } else if (equation.startsWith("MIN")) {
+            calculateMin();
+        }
+        return null;
+    }
+
+    private Double evaluateSumEquation(Integer pageId, String equation) {
+        equation = parseSumEquation(equation);
+        List<DataElement> dataElementList = getByRange(pageId, equation);
+        return calculateSum(dataElementList);
+    }
+
+    private List<DataElement> getDataElementListByRange(Integer pageId, String[] stringArray) {
+        int x = 0;
+        int y = 1;
+        List<Integer> xValues = convertStringToListOfIntegers(stringArray[x]);
+        List<Integer> yValues = convertStringToListOfIntegers(stringArray[y]);
+        return dataElementDAO.getByRange(pageId, xValues.get(0), xValues.get(xValues.size() - 1), yValues.get(0), yValues.get(yValues.size() - 1));
+    }
+
+    private String parseSumEquation(String equation) {
+        equation = StringUtils.delete(equation, "SUM");
+        equation = removeLeadingAndTrailingCharacterFromString(equation, '(', ')');
+        return equation;
+    }
+
+    private Double calculateSum(List<DataElement> dataElementList) {
+        AtomicReference<Double> sum = new AtomicReference<>(0.0);
+        dataElementList.forEach(dataElement -> {
+            sum.set(sum.get() + Double.parseDouble(dataElement.getDataValue().getValue()));
+        });
+        return sum.get();
+    }
+
+
+    private Double calculateAvg() {
+        return null;
+    }
+
+    private Double calculateMin() {
         return null;
     }
 

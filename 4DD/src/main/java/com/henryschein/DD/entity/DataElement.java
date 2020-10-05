@@ -21,7 +21,9 @@ public class DataElement {
     private Integer xcoord;
     private Integer ycoord;
     private Integer zcoord;
-    private String value;
+    @OneToOne(mappedBy = "dataElement", cascade = {CascadeType.ALL})
+//    @JoinColumn(name = "DATAELEMENT_ID")
+    private DataValue dataValue;
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -29,8 +31,8 @@ public class DataElement {
     private Integer dataId;
 
 
-    public DataElement(String value, Integer xcoord, Integer ycoord) {
-        this.value = value;
+    public DataElement(DataValue value, Integer xcoord, Integer ycoord) {
+        this.dataValue = value;
         this.xcoord = xcoord;
         this.ycoord = ycoord;
     }
@@ -40,7 +42,7 @@ public class DataElement {
         this.xcoord = dataElementDTO.getXcoord();
         this.ycoord = dataElementDTO.getYcoord();
         this.zcoord = dataElementDTO.getZcoord();
-        this.value = dataElementDTO.getValue();
+        this.dataValue = dataElementDTO.getValue();
         this.pageId = dataElementDTO.getPageId();
     }
 
@@ -51,7 +53,7 @@ public class DataElement {
                 ", xcoord: " + xcoord +
                 ", ycoord: " + ycoord +
                 ", zcoord: " + zcoord +
-                ", value: " + value +
+                ", value: " + dataValue.getValue() +
                 ", dataId: " + dataId +
                 " }";
     }

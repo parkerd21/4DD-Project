@@ -1,5 +1,6 @@
 package com.henryschein.DD.dto;
 
+import com.henryschein.DD.entity.DataValue;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -14,7 +15,7 @@ public class DataElementDTO {
     private Integer xcoord;
     private Integer ycoord;
     private Integer zcoord;
-    private String value;
+    private DataValue value;
     private Integer dataId;
 
     public DataElementDTO(Integer pageId, Integer x, Integer y) {
@@ -37,7 +38,7 @@ public class DataElementDTO {
                 ", xcoord: " + xcoord +
                 ", ycoord: " + ycoord +
                 ", zcoord: " + zcoord +
-                ", value: " + value +
+                ", value: " + value.getValue() +
                 ", dataId: " + dataId +
                 " }";
     }

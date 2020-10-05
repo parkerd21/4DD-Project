@@ -24,6 +24,11 @@ public class DataElementController {
         return dataElementService.getDataElement(new DataElementDTO(pageId, x, y, z));
     }
 
+    @GetMapping("/test")
+    public Double testEndPoint(@RequestParam Integer pageId, @RequestBody String equation) {
+        return dataElementService.evaluateEquationString(pageId, equation);
+    }
+
     @GetMapping("/history")
     public List<DataElement> getHistory(@RequestParam Integer pageId, @RequestParam Integer x, @RequestParam Integer y) {
         return dataElementService.getDataElementListByXY(new DataElementDTO(pageId, x, y));
@@ -44,12 +49,10 @@ public class DataElementController {
         return dataElementService.getByColumn(pageId, columnNumber);
     }
 
-    // TODO: endpoint for a range of DataElements
     @GetMapping("/range")
-    public List<DataElement> getByRange(@RequestParam String range) {
-        return dataElementService.getByRange(range);
+    public List<DataElement> getByRange(@RequestParam Integer pageId, @RequestParam String range) {
+        return dataElementService.getByRange(pageId, range);
     }
-
 
     @PostMapping("/")
     public DataElement createNewDataElement(@RequestBody DataElementDTO dataElementDTO) {

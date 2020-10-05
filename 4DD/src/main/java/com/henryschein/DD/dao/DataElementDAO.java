@@ -27,7 +27,6 @@ public interface DataElementDAO extends JpaRepository<DataElement, Integer> {
 
     @Modifying
     @Query("DELETE FROM DataElement d WHERE d.xcoord = :x AND d.ycoord = :y AND d.pageId = :pageId")
-
     void deleteByXY(@Param("pageId") Integer pageId, @Param("x") Integer x, @Param("y") Integer y);
 
     @Query("SELECT d FROM DataElement d WHERE d.pageId = :pageId AND d.ycoord = :rowNumber")
@@ -36,6 +35,9 @@ public interface DataElementDAO extends JpaRepository<DataElement, Integer> {
     @Query("SELECT d FROM DataElement d WHERE d.pageId = :pageId AND d.xcoord = :columnNumber")
     List<DataElement> getByColumn(@Param("pageId") Integer pageId, @Param("columnNumber") Integer columnNumber);
 
-    @Query("SELECT d FROM DataElement d where d.dataId = :dataId")
+    @Query("SELECT d FROM DataElement d WHERE d.dataId = :dataId")
     DataElement getById(@Param("dataId") Integer dataId);
+
+    @Query("SELECT d FROM DataElement d WHERE d.pageId = :pageId AND d.xcoord >= :x1 AND d.xcoord <= :x2 AND d.ycoord >= :y1 AND d.ycoord <= :y2")
+    List<DataElement> getByRange(@Param("pageId") Integer pageId, @Param("x1") Integer x1, @Param("x2") Integer x2, @Param("y1") Integer y1, @Param("y2") Integer y2);
 }

@@ -24,7 +24,6 @@ public class Page {
     private Integer bookId;
 
     @OneToMany(mappedBy = "pageId", cascade= {CascadeType.ALL})
-    //@JoinColumn(name = "page_id")
     private List<DataElement> dataElements = new ArrayList<>();
 
     public Page (Integer bookId) {
