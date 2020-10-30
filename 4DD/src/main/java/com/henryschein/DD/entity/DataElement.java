@@ -6,6 +6,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import javax.persistence.*;
+import java.util.Objects;
 
 
 @Getter
@@ -17,12 +18,12 @@ import javax.persistence.*;
 public class DataElement {
     @Column(name = "PAGE_ID")
     private Integer pageId;
-
     private Integer xcoord;
     private Integer ycoord;
     private Integer zcoord;
-    @OneToOne(mappedBy = "dataElement", cascade = {CascadeType.ALL})
-//    @JoinColumn(name = "DATAELEMENT_ID")
+
+    @OneToOne(cascade = CascadeType.ALL)
+    @JoinColumn(name = "DATA_ID", referencedColumnName = "id")
     private DataValue dataValue;
 
     @Id
@@ -42,7 +43,7 @@ public class DataElement {
         this.xcoord = dataElementDTO.getXcoord();
         this.ycoord = dataElementDTO.getYcoord();
         this.zcoord = dataElementDTO.getZcoord();
-        this.dataValue = dataElementDTO.getValue();
+        this.dataValue = Objects.isNull(dataElementDTO.getDataValue().getId()) ? null : dataElementDTO.getDataValue();
         this.pageId = dataElementDTO.getPageId();
     }
 

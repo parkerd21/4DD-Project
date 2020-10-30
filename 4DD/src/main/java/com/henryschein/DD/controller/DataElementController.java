@@ -24,10 +24,10 @@ public class DataElementController {
         return dataElementService.getDataElement(new DataElementDTO(pageId, x, y, z));
     }
 
-    @GetMapping("/test")
-    public Double testEndPoint(@RequestParam Integer pageId, @RequestBody String equation) {
-        return dataElementService.evaluateEquationString(pageId, equation);
-    }
+//    @GetMapping("/test")
+//    public String testEndPoint(@RequestParam Integer pageId, @RequestBody String equation) {
+//        return dataElementService.evaluateEquationString(pageId, equation);
+//    }
 
     @GetMapping("/history")
     public List<DataElement> getHistory(@RequestParam Integer pageId, @RequestParam Integer x, @RequestParam Integer y) {
@@ -51,13 +51,14 @@ public class DataElementController {
 
     @GetMapping("/range")
     public List<DataElement> getByRange(@RequestParam Integer pageId, @RequestParam String range) {
-        return dataElementService.getByRange(pageId, range);
+        return dataElementService.getByRange(pageId, range, true);
     }
 
     @PostMapping("/")
     public DataElement createNewDataElement(@RequestBody DataElementDTO dataElementDTO) {
         dataElementDTO.setDataId(null);
         dataElementDTO.setZcoord(null);
+        dataElementDTO.getDataValue().setId(null);
         return dataElementService.createNewDataElement(dataElementDTO);
     }
 

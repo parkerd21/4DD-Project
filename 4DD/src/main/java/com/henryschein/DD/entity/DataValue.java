@@ -6,7 +6,6 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import javax.persistence.*;
-import java.io.Serializable;
 
 @NoArgsConstructor
 @AllArgsConstructor
@@ -15,11 +14,17 @@ import java.io.Serializable;
 
 @Entity
 @Table(name = "VALUE")
-public class DataValue implements Serializable {
+public class DataValue {
     @Id
-    @OneToOne(cascade = {CascadeType.ALL})
-    @JoinColumn(name = "DATAELEMENT_ID")
-    private DataElement dataElement;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Integer id;
     private String equation;
     private String value;
+
+    public boolean doEvaluateEquation() {
+        if (this.equation.isEmpty() || !this.equation.startsWith("=")) {
+            return false;
+        }
+        return true;
+    }
 }

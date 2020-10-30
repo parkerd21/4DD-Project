@@ -14,7 +14,6 @@ import java.util.List;
 @Entity
 @Table(name = "PAGE")
 public class Page {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "PAGE_ID")

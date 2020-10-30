@@ -8,7 +8,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
+import javax.script.ScriptEngine;
+import javax.script.ScriptEngineManager;
 import javax.transaction.Transactional;
+import java.text.DecimalFormat;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
@@ -16,9 +19,10 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 public class DataElementService {
-
     private final DataElementDAO dataElementDAO;
     private final TheCacheManager cacheManager;
+    private static final DecimalFormat df = new DecimalFormat("0.00");
+
 
     public DataElementService(DataElementDAO theDataElementDAO, TheCacheManager cacheManager) {
         this.dataElementDAO = theDataElementDAO;
@@ -32,9 +36,10 @@ public class DataElementService {
             if (dataElement != null) {
                 log.info("database: retrieved dataElement " + dataElement.toString());
             } else {
-                log.info("database: dataElement not found " + dto.toString());
+                log.info("database: dataElement not found " + prettyPrintCoordsAndPageId(dto));
             }
         }
+        updateDataElementsValueByEquation(dataElement);
         return dataElement;
     }
 
@@ -78,10 +83,14 @@ public class DataElementService {
             DataElement newElement = new DataElement(dto);
             try {
                 newElement = dataElementDAO.saveAndFlush(newElement);
+                newElement.setDataValue(dto.getDataValue());
+                updateDataElementsValueByEquation(newElement);
+                newElement = dataElementDAO.saveAndFlush(newElement);
                 log.info("database: added new dataElement " + newElement.toString());
                 return newElement;
             } catch (Exception e) {
                 log.error("database: failed to create dataElement in page " + dto.getPageId());
+                e.printStackTrace();
                 return null;
             }
         } else {
@@ -90,11 +99,15 @@ public class DataElementService {
         }
     }
 
+
     public DataElement updateDataElement(DataElementDTO dto) {
         DataElement dataElement = getDataElement(dto);
         if (dataElement != null) {
             DataElement newElement = new DataElement(dto);
             newElement.setZcoord(dataElement.getZcoord() + 1);
+            newElement = dataElementDAO.saveAndFlush(newElement);
+            newElement.setDataValue(dto.getDataValue());
+            updateDataElementsValueByEquation(newElement);
             newElement = dataElementDAO.saveAndFlush(newElement);
             log.info("dataBase: updated/added dataElement " + newElement.toString());
             cacheManager.updateDataElementCacheRefresh(newElement, dto.getPageIdXY());
@@ -149,7 +162,7 @@ public class DataElementService {
         return dataElementList;
     }
 
-    public List<DataElement> getByRange(Integer pageId, String range) {
+    public List<DataElement> getByRange(Integer pageId, String range, boolean shouldRemoveHistory) {
         String key = "getByRange" + pageId + range;
         List<DataElement> dataElementList = cacheManager.retrieveDataElementList(key);
         if (dataElementList == null || dataElementList.isEmpty()) {
@@ -159,13 +172,30 @@ public class DataElementService {
             if (dataElementList != null && !dataElementList.isEmpty()) {
                 log.info("database: retrieved range of dataElements [" + stringArray[0] + ", " + stringArray[1] + "]");
                 cacheManager.saveDataElementListToDataElementCache(dataElementList);
-                dataElementList = removeHistoryFromResult(dataElementList);
+                if (shouldRemoveHistory) {
+                    dataElementList = removeHistoryFromResult(dataElementList);
+                }
                 cacheManager.saveDataElementListToListCache(key, dataElementList);
             } else {
                 log.info("database: no dataElements to retrieve in that range: [" + stringArray[0] + ", " + stringArray[1] + "]");
             }
         }
         return dataElementList;
+    }
+
+    private List<DataElement> getDataElementListByRange(Integer pageId, String[] stringArray) {
+        int x = 0;
+        int y = 1;
+        List<Integer> xValues = convertStringToListOfIntegers(stringArray[x]);
+        List<Integer> yValues = convertStringToListOfIntegers(stringArray[y]);
+        return dataElementDAO.getByRange(pageId, xValues.get(0), xValues.get(xValues.size() - 1), yValues.get(0), yValues.get(yValues.size() - 1));
+    }
+
+    private void updateDataElementsValueByEquation(DataElement dataElement) {
+        if (dataElement != null && dataElement.getDataValue().doEvaluateEquation()) {
+            String newValue = evaluateEquationString(dataElement.getPageId(), dataElement.getDataValue().getEquation());
+            dataElement.getDataValue().setValue(newValue);
+        }
     }
 
     private String removeLeadingAndTrailingCharacterFromString(String range, char leadingChar, char trailingChar) {
@@ -183,62 +213,139 @@ public class DataElementService {
         }
         return integerList;
     }
-//     TODO:
-//     "=[1,2] + [1,3]"
-//     "=SUM([1..3,1..6])"
-//     "=AVG([3,3])"
-//     "=MIN(3,1..10])"
-//     "=MAX(3,1..10])"
 
-    //TODO: do some more testing
-    public Double evaluateEquationString(Integer pageId, String equation) {
+    private String evaluateEquationString(Integer pageId, String equation) {
         equation = StringUtils.trimLeadingCharacter(equation, '=').toUpperCase();
-
         if (equation.startsWith("SUM")) {
             return evaluateSumEquation(pageId, equation);
         } else if (equation.startsWith("AVG")) {
-            calculateAvg();
+            return evaluateAvgEquation(pageId, equation);
         } else if (equation.startsWith("MIN")) {
-            calculateMin();
+            return evaluateMinEquation(pageId, equation);
+        } else if (equation.startsWith("MAX")) {
+            return evaluateMaxEquation(pageId, equation);
+        } else { // equation with +, -, *, / operators
+            return evaluateMathOperatorEquation(pageId, equation);
         }
-        return null;
     }
 
-    private Double evaluateSumEquation(Integer pageId, String equation) {
-        equation = parseSumEquation(equation);
-        List<DataElement> dataElementList = getByRange(pageId, equation);
-        return calculateSum(dataElementList);
+    //    "[1,2] + [1,3]"
+    private String evaluateMathOperatorEquation(Integer pageId, String equation) {
+        List<String> dataElementsCoords = getCoordsFromEquation(equation);
+        equation = updateEquationCoordsWithValues(pageId, equation, dataElementsCoords);
+        // solve equation 1.2 + 2.3
+        ScriptEngineManager mgr = new ScriptEngineManager();
+        ScriptEngine engine = mgr.getEngineByName("JavaScript");
+        try {
+            Double value = (double) engine.eval(equation);
+            return df.format(value);
+        } catch (Exception e) {
+            log.error("Error: unable to run equation through ScriptEnginge");
+            return null;
+        }
     }
 
-    private List<DataElement> getDataElementListByRange(Integer pageId, String[] stringArray) {
-        int x = 0;
-        int y = 1;
-        List<Integer> xValues = convertStringToListOfIntegers(stringArray[x]);
-        List<Integer> yValues = convertStringToListOfIntegers(stringArray[y]);
-        return dataElementDAO.getByRange(pageId, xValues.get(0), xValues.get(xValues.size() - 1), yValues.get(0), yValues.get(yValues.size() - 1));
+    private String updateEquationCoordsWithValues(Integer pageId, String equation, List<String> dataElementsCoords) {
+        for (int i = 0; i < dataElementsCoords.size(); i++) {
+            DataElementDTO dto = new DataElementDTO(pageId, dataElementsCoords.get(i));
+            DataElement dataElement = getDataElementByXY(dto);
+            try {
+                equation = equation.replace(dataElementsCoords.get(i), dataElement.getDataValue().getValue());
+            } catch (Exception e) {
+                log.error("Error: unable to replace that coord with the dataElement value");
+            }
+        }
+        return equation;
     }
 
-    private String parseSumEquation(String equation) {
-        equation = StringUtils.delete(equation, "SUM");
+    private List<String> getCoordsFromEquation(String tempEquation) {
+        List<String> dataElementsCoords = new ArrayList<>();
+        while (tempEquation.contains("[")) {
+            int startIndex = tempEquation.indexOf("[");
+            int endIndex = tempEquation.indexOf("]") + 1;
+            dataElementsCoords.add(tempEquation.substring(startIndex, endIndex));
+            tempEquation = tempEquation.substring(0, startIndex) + tempEquation.substring(endIndex);
+        }
+        return dataElementsCoords;
+    }
+
+    private String parseEquation(String equation, String pattern) {
+        equation = StringUtils.delete(equation, pattern);
         equation = removeLeadingAndTrailingCharacterFromString(equation, '(', ')');
         return equation;
     }
 
-    private Double calculateSum(List<DataElement> dataElementList) {
+    private String evaluateSumEquation(Integer pageId, String equation) {
+        equation = parseEquation(equation, "SUM");
+        List<DataElement> dataElementList = getByRange(pageId, equation, true);
+        return calculateSum(dataElementList);
+    }
+
+    private String calculateSum(List<DataElement> dataElementList) {
         AtomicReference<Double> sum = new AtomicReference<>(0.0);
-        dataElementList.forEach(dataElement -> {
-            sum.set(sum.get() + Double.parseDouble(dataElement.getDataValue().getValue()));
-        });
-        return sum.get();
+        try {
+            dataElementList.forEach(dataElement -> {
+                sum.set(sum.get() + Double.parseDouble(dataElement.getDataValue().getValue()));
+            });
+            return sum.get().toString();
+        } catch (NumberFormatException e) {
+            log.error("Only numerical values can be summed");
+            e.printStackTrace();
+            return "";
+        }
     }
 
-
-    private Double calculateAvg() {
-        return null;
+    private String evaluateAvgEquation(Integer pageId, String equation) {
+        equation = parseEquation(equation, "AVG");
+        List<DataElement> dataElementList = getByRange(pageId, equation, false);
+        return calculateAvg(dataElementList);
     }
 
-    private Double calculateMin() {
-        return null;
+    private String calculateAvg(List<DataElement> dataElementList) {
+        String sum = calculateSum(dataElementList);
+        try {
+            return Double.toString(Double.parseDouble(sum) / (double) dataElementList.size());
+        } catch (Exception e) {
+            log.error("Could not calculate the Average for those dataElement values");
+            e.printStackTrace();
+            return "";
+        }
+    }
+
+    private String evaluateMinEquation(Integer pageId, String equation) {
+        equation = parseEquation(equation, "MIN");
+        List<DataElement> dataElementList = getByRange(pageId, equation, true);
+        return calculateMin(dataElementList);
+    }
+
+    private String calculateMin(List<DataElement> dataElementList) {
+        try {
+            Optional<DataElement> min = dataElementList.stream().min(Comparator.comparingDouble(dataElement ->
+                    Double.parseDouble(dataElement.getDataValue().getValue())));
+            return min.map(dataElement -> dataElement.getDataValue().getValue()).orElse("");
+        } catch (Exception e) {
+            log.error("Could not calculate the minimum for those dataElement values");
+            e.printStackTrace();
+            return "";
+        }
+    }
+
+    private String calculateMax(List<DataElement> dataElementList) {
+        try {
+            Optional<DataElement> max = dataElementList.stream().max(Comparator.comparingDouble(dataElement ->
+                    Double.parseDouble(dataElement.getDataValue().getValue())));
+            return max.map(dataElement -> dataElement.getDataValue().getValue()).orElse("");
+        } catch (Exception e) {
+            log.error("Could not calculate the maximum for those dataElement values");
+            e.printStackTrace();
+            return "";
+        }
+    }
+
+    private String evaluateMaxEquation(Integer pageId, String equation) {
+        equation = parseEquation(equation, "MAX");
+        List<DataElement> dataElementList = getByRange(pageId, equation, true);
+        return calculateMax(dataElementList);
     }
 
     private List<DataElement> removeHistoryFromResult(List<DataElement> rowWithHistory) {

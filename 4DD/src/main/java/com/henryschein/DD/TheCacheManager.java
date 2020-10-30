@@ -56,6 +56,11 @@ public class TheCacheManager {
         log.info("dataElementCache: deleted dataElements at " + DataElementService.prettyPrintCoordsAndPageId(dto));
     }
 
+    public void invalidateDataElementCache() {
+        dataElementCache.invalidateAll();
+        log.info("dataElementCache: deleted all dataElements");
+    }
+
     public void updateDataElementCacheRefresh(DataElement newElement, String key) {
         Map<Integer, DataElement> map = dataElementCache.getIfPresent(key);
         if (Objects.nonNull(map)) {
